@@ -61,7 +61,7 @@ let hebcalData = [];
 
 // --- טעינת נתוני חגים מ-Hebcal (ללא פרשות) ---
 async function loadHebcalData(year) {
-  const url = `https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&nx=on&year=${year}&month=x&ss=on&mf=on&c=off&geo=none&le=he`;
+  const url = `https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&nx=on&year=${year}&month=x&ss=on&mf=on&c=off&geo=none&lg=he`;
   try {
     const response = await fetch(url);
     hebcalData = await response.json();
