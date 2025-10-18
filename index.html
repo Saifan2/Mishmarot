@@ -22,7 +22,7 @@
   .night { background:#3f51b5; }
   .off { background:#9e9e9e; }
   .weekend { background:#f0f8ff; }
-  .holiday { margin-top:5px; font-size:12px; color:#555; font-weight:bold; } /* סגנון חדש לחגים */
+  .holiday { margin-top:5px; font-size:12px; color:#555; font-weight:bold; }
 </style>
 </head>
 <body>
@@ -59,9 +59,9 @@ const totalCycle = pattern.length;
 // --- משתנה גלובלי לנתוני Hebcal ---
 let hebcalData = [];
 
-// --- טעינת נתוני חגים מ-Hebcal ---
+// --- טעינת נתוני חגים מ-Hebcal (ללא פרשות) ---
 async function loadHebcalData(year) {
-  const url = `https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&mod=on&nx=on&year=${year}&month=x&ss=on&mf=on&c=off&geo=none&s=on`;
+  const url = `https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&nx=on&year=${year}&month=x&ss=on&mf=on&c=off&geo=none&le=he`;
   try {
     const response = await fetch(url);
     hebcalData = await response.json();
@@ -135,7 +135,7 @@ function renderCalendar(month, year){
       else shiftClass="off";
     }
 
-    // חג או פרשה
+    // חג (ללא פרשות)
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     const holiday = hebcalData.items?.find(item => item.date === dateStr)?.title || '';
 
