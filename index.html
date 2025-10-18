@@ -22,6 +22,7 @@
   .night { background:#3f51b5; }
   .off { background:#9e9e9e; }
   .weekend { background:#f0f8ff; }
+  .holiday { margin-top:5px; font-size:12px; color:#555; font-weight:bold; } /* סגנון חדש לחגים */
 </style>
 </head>
 <body>
@@ -54,6 +55,20 @@ const pattern = [
   ...Array(4).fill("חופש")
 ];
 const totalCycle = pattern.length;
+
+// --- משתנה גלובלי לנתוני Hebcal ---
+let hebcalData = [];
+
+// --- טעינת נתוני חגים מ-Hebcal ---
+async function loadHebcalData(year) {
+  const url = `https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&mod=on&nx=on&year=${year}&month=x&ss=on&mf=on&c=off&geo=none&s=on`;
+  try {
+    const response = await fetch(url);
+    hebcalData = await response.json();
+  } catch (error) {
+    console.error('שגיאה בטעינת נתוני Hebcal:', error);
+  }
+}
 
 // --- חודשים ושנים ---
 const monthSelect = document.getElementById("month-select");
@@ -120,37 +135,44 @@ function renderCalendar(month, year){
       else shiftClass="off";
     }
 
+    // חג או פרשה
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const holiday = hebcalData.items?.find(item => item.date === dateStr)?.title || '';
+
     dayDiv.innerHTML = `<div class="date">${day}</div>
-                        <div class="shift ${shiftClass}">${shiftText}</div>`;
+                        <div class="shift ${shiftClass}">${shiftText}</div>
+                        <div class="holiday">${holiday}</div>`;
     grid.appendChild(dayDiv);
   }
 }
 
 // --- ניווט ---
-function updateCalendar(){
+async function updateCalendar(){
   monthSelect.value=currentMonth;
   yearSelect.value=currentYearSelected;
-  renderCalendar(currentMonth,currentYearSelected);
+  await loadHebcalData(currentYearSelected); // טען נתונים עבור השנה הנוכחית
+  renderCalendar(currentMonth, currentYearSelected);
 }
 
-document.getElementById("prev").onclick = ()=>{
+// --- הפעלה ראשונית ---
+document.addEventListener('DOMContentLoaded', updateCalendar);
+
+// --- אירועי ניווט ---
+document.getElementById("prev").onclick = async () => {
   currentMonth--;
   if(currentMonth<0){currentMonth=11; currentYearSelected--;}
-  updateCalendar();
+  await updateCalendar();
 };
-document.getElementById("next").onclick = ()=>{
+document.getElementById("next").onclick = async () => {
   currentMonth++;
   if(currentMonth>11){currentMonth=0; currentYearSelected++;}
-  updateCalendar();
+  await updateCalendar();
 };
-document.getElementById("go").onclick = ()=>{
+document.getElementById("go").onclick = async () => {
   currentMonth=parseInt(monthSelect.value);
   currentYearSelected=parseInt(yearSelect.value);
-  updateCalendar();
+  await updateCalendar();
 };
-
-// הפעלה ראשונית
-updateCalendar();
 </script>
 </body>
 </html>
