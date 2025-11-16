@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>לוח משמרות</title>
+
 <style>
   body { font-family:"Segoe UI",sans-serif; background:#f3f6fb; color:#333; margin:0; text-align:center; }
   header { margin-top:20px; }
@@ -26,9 +27,20 @@
 </style>
 </head>
 <body>
+
 <header>
   <h1>לוח משמרות</h1>
-  <p>התחלה: 31/10/2025 — בוקר ראשון</p>
+
+  <!-- בחירת משמרת + שמירה ב-localStorage -->
+  <div style="margin-top:10px;">
+    <label>בחר משמרת: </label>
+    <select id="shiftSelect">
+      <option value="1">משמרת 1</option>
+      <option value="2">משמרת 2</option>
+      <option value="3">משמרת 3</option>
+      <option value="4">משמרת 4</option>
+    </select>
+  </div>
 </header>
 
 <div class="calendar">
@@ -45,132 +57,179 @@
 </div>
 
 <script>
-// --- משמרות ---
-const startDate = new Date(Date.UTC(2025,9,31)); // 31/10/2025
-const pattern = [
+// ================================
+//       מחזור משמרות (16 ימים)
+// ================================
+const cycle = [
   ...Array(4).fill("בוקר"),
   ...Array(3).fill("צהריים"),
   ...Array(4).fill("לילה"),
   "צהריים",
   ...Array(4).fill("חופש")
 ];
-const totalCycle = pattern.length;
+const cycleLength = cycle.length;
 
-// --- משתנה גלובלי לנתוני Hebcal ---
+// ================================
+//      תאריכי התחלה למשמרות
+// ================================
+const shiftStartDate = {
+  1: "2025-11-24",
+  2: "2025-11-12",
+  3: "2025-11-20",
+  4: "2025-11-16"
+};
+
+// ================================
+//     טעינת משמרת מה-localStorage
+// ================================
+const shiftSelect = document.getElementById("shiftSelect");
+shiftSelect.value = localStorage.getItem("selectedShift") || "4";
+
+shiftSelect.addEventListener("change", () => {
+  localStorage.setItem("selectedShift", shiftSelect.value);
+  updateCalendar();
+});
+
+// ================================
+//   נתוני חגים מ-Hebcal
+// ================================
 let hebcalData = [];
 
-// --- טעינת נתוני חגים מ-Hebcal (ללא פרשות) ---
 async function loadHebcalData(year) {
   const url = `https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&nx=on&year=${year}&month=x&ss=on&mf=on&c=off&geo=none&lg=he`;
   try {
     const response = await fetch(url);
     hebcalData = await response.json();
   } catch (error) {
-    console.error('שגיאה בטעינת נתוני Hebcal:', error);
+    console.error("שגיאת Hebcal:", error);
   }
 }
 
-// --- חודשים ושנים ---
+// ================================
+//      חישוב משמרת לפי תאריך
+// ================================
+function getShiftForDate(date) {
+  const s = shiftSelect.value;
+  const start = new Date(shiftStartDate[s] + "T00:00:00Z");
+  const diff = Math.floor((date - start) / (1000 * 60 * 60 * 24));
+
+  // מודולו חיובי לתאריכים אחורה
+  const index = ((diff % cycleLength) + cycleLength) % cycleLength;
+
+  return cycle[index];
+}
+
+// ================================
+//        שאר הקוד שלך (לוח)
+// ================================
 const monthSelect = document.getElementById("month-select");
 const yearSelect = document.getElementById("year-select");
-for(let m=0;m<12;m++){
-  const opt=document.createElement("option");
-  opt.value=m;
-  opt.text=new Intl.DateTimeFormat('he-IL',{month:'long'}).format(new Date(2000,m,1));
+
+for (let m = 0; m < 12; m++) {
+  const opt = document.createElement("option");
+  opt.value = m;
+  opt.text = new Intl.DateTimeFormat("he-IL", { month: "long" })
+    .format(new Date(2000, m, 1));
   monthSelect.appendChild(opt);
 }
+
 const currentYear = new Date().getFullYear();
-for(let y=currentYear-5; y<=currentYear+10; y++){
-  const opt=document.createElement("option");
-  opt.value=y;
-  opt.text=y;
+for (let y = currentYear - 5; y <= currentYear + 10; y++) {
+  const opt = document.createElement("option");
+  opt.value = y;
+  opt.text = y;
   yearSelect.appendChild(opt);
 }
 
-// --- הצגת לוח ---
 const grid = document.getElementById("calendar-grid");
 let currentMonth = new Date().getMonth();
 let currentYearSelected = new Date().getFullYear();
 
-function renderCalendar(month, year){
-  grid.innerHTML="";
-  const today = new Date();
-  const firstDay = new Date(Date.UTC(year,month,1));
-  const daysInMonth = new Date(Date.UTC(year,month+1,0)).getUTCDate();
 
-  const dayNames = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
-  dayNames.forEach(d=>{
-    const el=document.createElement("div");
-    el.className="day-name";
-    el.textContent=d;
+function renderCalendar(month, year) {
+  grid.innerHTML = "";
+  const today = new Date();
+
+  const firstDay = new Date(Date.UTC(year, month, 1));
+  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+
+  const dayNames = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+  dayNames.forEach(d => {
+    const el = document.createElement("div");
+    el.className = "day-name";
+    el.textContent = d;
     grid.appendChild(el);
   });
 
-  const startDay = firstDay.getUTCDay(); // ראשון=0
-  for(let i=0;i<startDay;i++){
+  const startDay = firstDay.getUTCDay();
+  for (let i = 0; i < startDay; i++) {
     grid.appendChild(document.createElement("div"));
   }
 
-  for(let day=1;day<=daysInMonth;day++){
-    const date = new Date(Date.UTC(year,month,day));
-    const dayDiv = document.createElement("div");
-    dayDiv.className="day";
-    if(today.getUTCDate()===day && today.getUTCMonth()===month && today.getUTCFullYear()===year){
-      dayDiv.classList.add("today");
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(Date.UTC(year, month, day));
+
+    const div = document.createElement("div");
+    div.className = "day";
+
+    if (today.getUTCDate() === day && today.getUTCMonth() === month && today.getUTCFullYear() === year) {
+      div.classList.add("today");
     }
 
-    // סימון סופ"ש
     const weekDay = date.getUTCDay();
-    if(weekDay===5 || weekDay===6) dayDiv.classList.add("weekend"); // שישי/שבת
+    if (weekDay === 5 || weekDay === 6) div.classList.add("weekend");
 
     // משמרת
-    const diffDays = Math.floor((date - startDate)/(1000*60*60*24));
-    let shiftText="", shiftClass="off";
-    if(diffDays>=0){
-      const shiftType = pattern[diffDays % totalCycle];
-      shiftText=shiftType;
-      if(shiftType==="בוקר") shiftClass="morning";
-      else if(shiftType==="צהריים") shiftClass="noon";
-      else if(shiftType==="לילה") shiftClass="night";
-      else shiftClass="off";
-    }
+    const shift = getShiftForDate(date);
+    let shiftClass = "off";
+    if (shift === "בוקר") shiftClass = "morning";
+    else if (shift === "צהריים") shiftClass = "noon";
+    else if (shift === "לילה") shiftClass = "night";
 
-    // חג (ללא פרשות)
-    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const holiday = hebcalData.items?.find(item => item.date === dateStr)?.title || '';
+    // חג
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const holiday = hebcalData.items?.find(i => i.date === dateStr)?.title || "";
 
-    dayDiv.innerHTML = `<div class="date">${day}</div>
-                        <div class="shift ${shiftClass}">${shiftText}</div>
-                        <div class="holiday">${holiday}</div>`;
-    grid.appendChild(dayDiv);
+    div.innerHTML = `
+      <div class="date">${day}</div>
+      <div class="shift ${shiftClass}">${shift}</div>
+      <div class="holiday">${holiday}</div>
+    `;
+
+    grid.appendChild(div);
   }
 }
 
-// --- ניווט ---
-async function updateCalendar(){
-  monthSelect.value=currentMonth;
-  yearSelect.value=currentYearSelected;
-  await loadHebcalData(currentYearSelected); // טען נתונים עבור השנה הנוכחית
+async function updateCalendar() {
+  monthSelect.value = currentMonth;
+  yearSelect.value = currentYearSelected;
+  await loadHebcalData(currentYearSelected);
   renderCalendar(currentMonth, currentYearSelected);
 }
 
-// --- הפעלה ראשונית ---
-document.addEventListener('DOMContentLoaded', updateCalendar);
+document.addEventListener("DOMContentLoaded", updateCalendar);
 
-// --- אירועי ניווט ---
 document.getElementById("prev").onclick = async () => {
   currentMonth--;
-  if(currentMonth<0){currentMonth=11; currentYearSelected--;}
+  if (currentMonth < 0) {
+    currentMonth = 11;
+    currentYearSelected--;
+  }
   await updateCalendar();
 };
+
 document.getElementById("next").onclick = async () => {
   currentMonth++;
-  if(currentMonth>11){currentMonth=0; currentYearSelected++;}
+  if (currentMonth > 11) {
+    currentMonth = 0;
+    currentYearSelected++;
+  }
   await updateCalendar();
 };
+
 document.getElementById("go").onclick = async () => {
-  currentMonth=parseInt(monthSelect.value);
-  currentYearSelected=parseInt(yearSelect.value);
+  currentMonth = parseInt(monthSelect.value);
+  currentYearSelected = parseInt(yearSelect.value);
   await updateCalendar();
 };
 </script>
