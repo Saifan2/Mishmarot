@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>לוח משמרות</title>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, "Segoe UI", sans-serif;
+  background: #f4f6f9;
+  color: #263238;
+  margin: 0;
+  text-align: center;
+}
+
+header {
+  padding: 18px 12px 4px;
+}
+
+h1 {
+  margin: 0 0 12px;
+  font-size: 28px;
+}
+
+.top-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  padding: 8px 12px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+
+select,
+button {
+  font: inherit;
+}
+
+.top-select select {
+  border: 1px solid #d7dee8;
+  border-radius: 7px;
+  padding: 7px 10px;
+  background: #fff;
+}
+
+.calendar {
+  width: 95%;
+  max-width: 900px;
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.09);
+  margin: 18px auto 30px;
+  overflow: hidden;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1479c9;
+  color: #fff;
+  padding: 13px;
+  gap: 8px;
+}
+
+.calendar-header .middle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.calendar-header select,
+.calendar-header button {
+  border: none;
+  border-radius: 7px;
+  padding: 8px 10px;
+}
+
+.calendar-header select {
+  background: #fff;
+  color: #222;
+}
+
+.calendar-header button {
+  color: #fff;
+  background: rgba(255,255,255,.16);
+  cursor: pointer;
+}
+
+.calendar-header button:hover {
+  background: rgba(255,255,255,.26);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.day-name {
+  background: #e8edf3;
+  padding: 10px 2px;
+  font-weight: 700;
+  border-bottom: 1px solid #dce2e9;
+}
+
+.empty {
+  min-height: 105px;
+  border: 1px solid #f0f1f3;
+  background: #fafbfc;
+}
+
+.day {
+  border: 1px solid #eef0f3;
+  min-height: 105px;
+  padding: 7px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  cursor: pointer;
+  transition: .15s;
+  position: relative;
+}
+
+.day:hover {
+  background: #f6fbff;
+}
+
+.day.today {
+  background: #e7f4ff;
+  box-shadow: inset 0 0 0 2px #1479c9;
+}
+
+.date {
+  width: 100%;
+  text-align: right;
+  padding: 0 5px;
+  font-weight: 700;
+  color: #52606d;
+  font-size: 14px;
+}
+
+.shift {
+  margin-top: 11px;
+  min-width: 66px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.morning {
+  background: #43a047;
+}
+
+.noon {
+  background: #fb8c00;
+}
+
+.night {
+  background: #3949ab;
+}
+
+.off {
+  background: #8e99a5;
+}
+
+.holiday {
+  margin-top: 7px;
+  font-size: 11px;
+  color: #5c6773;
+  font-weight: 600;
+  line-height: 1.25;
+  padding: 0 4px;
+}
+
+
+/* ==========================
+   חלון פירוט
+   ========================== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(24,32,42,.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal {
+  width: min(520px, 100%);
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 55px rgba(0,0,0,.25);
+  text-align: right;
+}
+
+.modal-head {
+  padding: 16px 18px;
+  border-bottom: 1px solid #e8ebef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-head h2 {
+  margin: 0;
+  font-size: 21px;
+}
+
+.modal-date {
+  color: #718096;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.modal-holiday {
+  color: #b26a00;
+  font-weight: 700;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.close {
+  border: 0;
+  border-radius: 9px;
+  width: 38px;
+  height: 38px;
+  background: #eef2f6;
+  color: #333;
+  cursor: pointer;
+  font-size: 22px;
+}
+
+.teams {
+  padding: 12px;
+  display: grid;
+  gap: 9px;
+}
+
+.team {
+  border: 1px solid #e5e9ee;
+  border-radius: 11px;
+  padding: 11px;
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.team.mine {
+  border-color: #1479c9;
+  box-shadow: 0 0 0 2px rgba(20,121,201,.08);
+}
+
+.status {
+  color: #fff;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 9px 7px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.team-name {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 10px;
+  margin-right: 6px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #e7f3ff;
+  color: #1479c9;
+}
+
+.workers {
+  color: #5d6875;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.small-note {
+  color: #8a96a3;
+  font-size: 11px;
+  padding: 0 16px 15px;
+}
+
+
+/* ==========================
+   מובייל
+   ========================== */
+
+@media (max-width: 650px) {
+
+  header {
+    padding-top: 12px;
+  }
+
+  h1 {
+    font-size: 23px;
+  }
+
+  .calendar {
+    width: 98%;
+    margin-top: 12px;
+    border-radius: 12px;
+  }
+
+  .calendar-header {
+    padding: 9px 5px;
+  }
+
+  .calendar-header > button {
+    font-size: 0;
+    width: 38px;
+    height: 38px;
+    position: relative;
+  }
+
+  #prev::after {
+    content: "‹";
+    font-size: 25px;
+  }
+
+  #next::after {
+    content: "›";
+    font-size: 25px;
+  }
+
+  .day-name {
+    font-size: 11px;
+    padding: 8px 1px;
+  }
+
+  .day,
+  .empty {
+    min-height: 86px;
+  }
+
+  .day {
+    padding: 5px 1px;
+  }
+
+  .date {
+    font-size: 12px;
+    padding: 0 3px;
+  }
+
+  .shift {
+    min-width: auto;
+    padding: 4px 5px;
+    margin-top: 7px;
+    font-size: 11px;
+  }
+
+  .holiday {
+    font-size: 9px;
+    margin-top: 5px;
+    line-height: 1.15;
+  }
+
+  .team {
+    grid-template-columns: 75px 1fr;
+    padding: 10px;
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+
+<header>
+
+  <h1>לוח משמרות</h1>
+
+  <div class="top-select">
+
+    <label for="shiftSelect">
+      בחר משמרת:
+    </label>
+
+    <select id="shiftSelect">
+
+      <option value="1">
+        משמרת 1
+      </option>
+
+      <option value="2">
+        משמרת 2
+      </option>
+
+      <option value="3">
+        משמרת 3
+      </option>
+
+      <option value="4">
+        משמרת 4
+      </option>
+
+    </select>
+
+  </div>
+
+</header>
+
+
+<div class="calendar">
+
+  <div class="calendar-header">
+
+    <button id="prev">
+      חודש קודם
+    </button>
+
+
+    <div class="middle">
+
+      <select id="monthSelect"></select>
+
+      <select id="yearSelect"></select>
+
+      <button id="go">
+        הצג
+      </button>
+
+    </div>
+
+
+    <button id="next">
+      חודש הבא
+    </button>
+
+  </div>
+
+
+  <div
+    class="calendar-grid"
+    id="calendarGrid">
+  </div>
+
+</div>
+
+
+
+<!-- ==========================
+     חלון פירוט
+     ========================== -->
+
+<div
+  class="modal-overlay"
+  id="overlay">
+
+  <div class="modal">
+
+    <div class="modal-head">
+
+      <div>
+
+        <h2>
+          סידור המשמרות
+        </h2>
+
+        <div
+          class="modal-date"
+          id="modalDate">
+        </div>
+
+        <div
+          class="modal-holiday"
+          id="modalHoliday">
+        </div>
+
+      </div>
+
+
+      <button
+        class="close"
+        id="closeModal">
+
+        ×
+
+      </button>
+
+    </div>
+
+
+    <div
+      class="teams"
+      id="teams">
+    </div>
+
+
+    <div class="small-note">
+      מוצג הסידור של כל 4 המשמרות ביום שנבחר.
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<script>
+
+
+/* =====================================================
+   מחזור המשמרות
+   ===================================================== */
+
+const cycle = [
+
+  "בוקר",
+  "בוקר",
+  "בוקר",
+  "בוקר",
+
+  "צהריים",
+  "צהריים",
+  "צהריים",
+
+  "לילה",
+  "לילה",
+  "לילה",
+  "לילה",
+
+  "צהריים",
+
+  "חופש",
+  "חופש",
+  "חופש",
+  "חופש"
+
+];
+
+
+const cycleLength = cycle.length;
+
+
+
+/* =====================================================
+   תאריך בסיס לכל משמרת
+   ===================================================== */
+
+const shiftStartDate = {
+
+  1: "2025-11-24",
+
+  2: "2025-11-12",
+
+  3: "2025-11-20",
+
+  4: "2025-11-16"
+
+};
+
+
+
+/* =====================================================
+   שמות העובדים
+
+   כאן אתה משנה את השמות
+   ===================================================== */
+
+const shiftTeams = {
+
+  1: [
+    "שם עובד 1",
+    "שם עובד 2",
+    "שם עובד 3"
+  ],
+
+  2: [
+    "שם עובד 4",
+    "שם עובד 5",
+    "שם עובד 6"
+  ],
+
+  3: [
+    "שם עובד 7",
+    "שם עובד 8",
+    "שם עובד 9"
+  ],
+
+  4: [
+    "שם עובד 10",
+    "שם עובד 11",
+    "שם עובד 12"
+  ]
+
+};
+
+
+
+/* =====================================================
+   Hebcal
+   ===================================================== */
+
+let hebcalData = {
+  items: []
+};
+
+
+let loadedHebcalYear = null;
+
+
+async function loadHebcalData(year) {
+
+  if (
+    loadedHebcalYear === year
+    &&
+    hebcalData.items.length
+  ) {
+    return;
+  }
+
+
+  const url =
+    `https://www.hebcal.com/hebcal` +
+    `?v=1` +
+    `&cfg=json` +
+    `&maj=on` +
+    `&min=on` +
+    `&mod=on` +
+    `&nx=on` +
+    `&year=${year}` +
+    `&month=x` +
+    `&ss=on` +
+    `&mf=on` +
+    `&c=off` +
+    `&geo=none` +
+    `&lg=he`;
+
+
+  try {
+
+    const response =
+      await fetch(url);
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        "Hebcal HTTP " +
+        response.status
+      );
+
+    }
+
+
+    hebcalData =
+      await response.json();
+
+
+    loadedHebcalYear =
+      year;
+
+
+  } catch (error) {
+
+    console.error(
+      "שגיאה בטעינת Hebcal:",
+      error
+    );
+
+
+    hebcalData = {
+      items: []
+    };
+
+  }
+
+}
+
+
+
+/* =====================================================
+   מציאת חג לפי תאריך
+   ===================================================== */
+
+function getHolidayForDate(
+  year,
+  month,
+  day
+) {
+
+  const dateStr =
+
+    `${year}-` +
+
+    `${String(month + 1).padStart(2, "0")}-` +
+
+    `${String(day).padStart(2, "0")}`;
+
+
+  const items =
+    hebcalData.items || [];
+
+
+  /*
+  יכול להיות שבאותו יום יש יותר מאירוע אחד,
+  לכן נאסוף את כולם.
+  */
+
+  const matches =
+    items.filter(
+      item =>
+        item.date === dateStr
+    );
+
+
+  if (!matches.length) {
+
+    return "";
+
+  }
+
+
+  /*
+  מונע כפילויות בשם
+  */
+
+  const names =
+    [
+      ...new Set(
+        matches.map(
+          item =>
+            item.title
+        )
+      )
+    ];
+
+
+  return names.join(" · ");
+
+}
+
+
+
+/* =====================================================
+   אלמנטים
+   ===================================================== */
+
+const shiftSelect =
+  document.getElementById(
+    "shiftSelect"
+  );
+
+
+const monthSelect =
+  document.getElementById(
+    "monthSelect"
+  );
+
+
+const yearSelect =
+  document.getElementById(
+    "yearSelect"
+  );
+
+
+const calendarGrid =
+  document.getElementById(
+    "calendarGrid"
+  );
+
+
+const overlay =
+  document.getElementById(
+    "overlay"
+  );
+
+
+const modalDate =
+  document.getElementById(
+    "modalDate"
+  );
+
+
+const modalHoliday =
+  document.getElementById(
+    "modalHoliday"
+  );
+
+
+const teamsEl =
+  document.getElementById(
+    "teams"
+  );
+
+
+
+/* =====================================================
+   חודשים
+   ===================================================== */
+
+const monthNames = [
+
+  "ינואר",
+  "פברואר",
+  "מרץ",
+  "אפריל",
+  "מאי",
+  "יוני",
+  "יולי",
+  "אוגוסט",
+  "ספטמבר",
+  "אוקטובר",
+  "נובמבר",
+  "דצמבר"
+
+];
+
+
+monthNames.forEach(
+  (name, index) => {
+
+    const option =
+      document.createElement(
+        "option"
+      );
+
+
+    option.value =
+      index;
+
+
+    option.textContent =
+      name;
+
+
+    monthSelect.appendChild(
+      option
+    );
+
+  }
+);
+
+
+
+/* =====================================================
+   שנים
+   ===================================================== */
+
+const thisYear =
+  new Date().getFullYear();
+
+
+for (
+  let year = thisYear - 5;
+  year <= thisYear + 10;
+  year++
+) {
+
+  const option =
+    document.createElement(
+      "option"
+    );
+
+
+  option.value =
+    year;
+
+
+  option.textContent =
+    year;
+
+
+  yearSelect.appendChild(
+    option
+  );
+
+}
+
+
+
+/* =====================================================
+   חודש ושנה נוכחיים
+   ===================================================== */
+
+let currentMonth =
+  new Date().getMonth();
+
+
+let currentYear =
+  new Date().getFullYear();
+
+
+
+/* =====================================================
+   שמירת המשמרת
+   ===================================================== */
+
+shiftSelect.value =
+
+  localStorage.getItem(
+    "selectedShift"
+  )
+
+  ||
+
+  "4";
+
+
+
+/* =====================================================
+   תאריך UTC
+   ===================================================== */
+
+function utcDateFromString(
+  str
+) {
+
+  const [
+    year,
+    month,
+    day
+  ] =
+
+  str
+  .split("-")
+  .map(Number);
+
+
+  return new Date(
+
+    Date.UTC(
+
+      year,
+
+      month - 1,
+
+      day
+
+    )
+
+  );
+
+}
+
+
+
+/* =====================================================
+   חישוב משמרת
+   ===================================================== */
+
+function getShiftForTeam(
+  date,
+  teamId
+) {
+
+  const start =
+    utcDateFromString(
+
+      shiftStartDate[
+        teamId
+      ]
+
+    );
+
+
+  const oneDay =
+    24 *
+    60 *
+    60 *
+    1000;
+
+
+  const diff =
+    Math.round(
+
+      (
+        date.getTime()
+        -
+        start.getTime()
+      )
+
+      /
+
+      oneDay
+
+    );
+
+
+  const index =
+
+    (
+      (
+        diff
+        %
+        cycleLength
+      )
+
+      +
+
+      cycleLength
+
+    )
+
+    %
+
+    cycleLength;
+
+
+  return cycle[index];
+
+}
+
+
+
+/* =====================================================
+   קלאס לפי משמרת
+   ===================================================== */
+
+function shiftClass(
+  shift
+) {
+
+  if (
+    shift === "בוקר"
+  ) {
+
+    return "morning";
+
+  }
+
+
+  if (
+    shift === "צהריים"
+  ) {
+
+    return "noon";
+
+  }
+
+
+  if (
+    shift === "לילה"
+  ) {
+
+    return "night";
+
+  }
+
+
+  return "off";
+
+}
+
+
+
+/* =====================================================
+   פתיחת יום
+   ===================================================== */
+
+function openDay(
+  date
+) {
+
+
+  modalDate.textContent =
+
+    new Intl.DateTimeFormat(
+
+      "he-IL",
+
+      {
+
+        weekday:
+          "long",
+
+        day:
+          "numeric",
+
+        month:
+          "long",
+
+        year:
+          "numeric",
+
+        timeZone:
+          "UTC"
+
+      }
+
+    ).format(
+      date
+    );
+
+
+
+  const holiday =
+
+    getHolidayForDate(
+
+      date.getUTCFullYear(),
+
+      date.getUTCMonth(),
+
+      date.getUTCDate()
+
+    );
+
+
+  modalHoliday.textContent =
+    holiday;
+
+
+  teamsEl.innerHTML =
+    "";
+
+
+
+  for (
+    let teamId = 1;
+    teamId <= 4;
+    teamId++
+  ) {
+
+
+    const shift =
+
+      getShiftForTeam(
+
+        date,
+
+        teamId
+
+      );
+
+
+    const workers =
+
+      shiftTeams[
+        teamId
+      ];
+
+
+    const mine =
+
+      String(teamId)
+
+      ===
+
+      String(
+        shiftSelect.value
+      );
+
+
+
+    const row =
+
+      document.createElement(
+        "div"
+      );
+
+
+    row.className =
+
+      "team"
+
+      +
+
+      (
+        mine
+        ?
+        " mine"
+        :
+        ""
+      );
+
+
+
+    row.innerHTML = `
+
+      <div
+        class="
+          status
+          ${shiftClass(shift)}
+        "
+      >
+
+        ${shift}
+
+      </div>
+
+
+      <div>
+
+        <div
+          class="team-name"
+        >
+
+          משמרת ${teamId}
+
+          ${
+            mine
+            ?
+            '<span class="badge">המשמרת שלי</span>'
+            :
+            ''
+          }
+
+        </div>
+
+
+        <div
+          class="workers"
+        >
+
+          ${workers.join(" · ")}
+
+        </div>
+
+      </div>
+
+    `;
+
+
+    teamsEl.appendChild(
+      row
+    );
+
+  }
+
+
+
+  overlay.classList.add(
+    "open"
+  );
+
+
+  document.body.style.overflow =
+    "hidden";
+
+}
+
+
+
+/* =====================================================
+   סגירת יום
+   ===================================================== */
+
+function closeDay() {
+
+  overlay.classList.remove(
+    "open"
+  );
+
+
+  document.body.style.overflow =
+    "";
+
+}
+
+
+
+/* =====================================================
+   ציור הלוח
+   ===================================================== */
+
+function renderCalendar() {
+
+
+  calendarGrid.innerHTML =
+    "";
+
+
+  monthSelect.value =
+    currentMonth;
+
+
+  yearSelect.value =
+    currentYear;
+
+
+
+  const dayNames = [
+
+    "ראשון",
+
+    "שני",
+
+    "שלישי",
+
+    "רביעי",
+
+    "חמישי",
+
+    "שישי",
+
+    "שבת"
+
+  ];
+
+
+
+  dayNames.forEach(
+    name => {
+
+      const el =
+
+        document.createElement(
+          "div"
+        );
+
+
+      el.className =
+        "day-name";
+
+
+      el.textContent =
+        name;
+
+
+      calendarGrid.appendChild(
+        el
+      );
+
+    }
+  );
+
+
+
+  const firstDay =
+
+    new Date(
+
+      Date.UTC(
+
+        currentYear,
+
+        currentMonth,
+
+        1
+
+      )
+
+    );
+
+
+
+  const daysInMonth =
+
+    new Date(
+
+      Date.UTC(
+
+        currentYear,
+
+        currentMonth + 1,
+
+        0
+
+      )
+
+    ).getUTCDate();
+
+
+
+  /*
+  תאים ריקים לפני תחילת החודש
+  */
+
+  for (
+    let i = 0;
+    i < firstDay.getUTCDay();
+    i++
+  ) {
+
+    const empty =
+
+      document.createElement(
+        "div"
+      );
+
+
+    empty.className =
+      "empty";
+
+
+    calendarGrid.appendChild(
+      empty
+    );
+
+  }
+
+
+
+  const realToday =
+    new Date();
+
+
+
+  const selectedTeam =
+
+    Number(
+      shiftSelect.value
+    );
+
+
+
+  /*
+  יצירת הימים
+  */
+
+  for (
+    let day = 1;
+    day <= daysInMonth;
+    day++
+  ) {
+
+
+    const date =
+
+      new Date(
+
+        Date.UTC(
+
+          currentYear,
+
+          currentMonth,
+
+          day
+
+        )
+
+      );
+
+
+
+    const shift =
+
+      getShiftForTeam(
+
+        date,
+
+        selectedTeam
+
+      );
+
+
+
+    const holiday =
+
+      getHolidayForDate(
+
+        currentYear,
+
+        currentMonth,
+
+        day
+
+      );
+
+
+
+    const box =
+
+      document.createElement(
+        "div"
+      );
+
+
+    box.className =
+      "day";
+
+
+
+    /*
+    היום הנוכחי
+    */
+
+    if (
+
+      realToday.getFullYear()
+      ===
+      currentYear
+
+      &&
+
+      realToday.getMonth()
+      ===
+      currentMonth
+
+      &&
+
+      realToday.getDate()
+      ===
+      day
+
+    ) {
+
+      box.classList.add(
+        "today"
+      );
+
+    }
+
+
+
+    box.innerHTML = `
+
+      <div class="date">
+
+        ${day}
+
+      </div>
+
+
+      <div
+        class="
+          shift
+          ${shiftClass(shift)}
+        "
+      >
+
+        ${shift}
+
+      </div>
+
+
+      ${
+        holiday
+
+        ?
+
+        `
+        <div class="holiday">
+          ${holiday}
+        </div>
+        `
+
+        :
+
+        ""
+      }
+
+    `;
+
+
+
+    /*
+    לחיצה פותחת פירוט
+    */
+
+    box.addEventListener(
+
+      "click",
+
+      () => {
+
+        openDay(
+          date
+        );
+
+      }
+
+    );
+
+
+
+    calendarGrid.appendChild(
+      box
+    );
+
+  }
+
+}
+
+
+
+/* =====================================================
+   שינוי משמרת
+   ===================================================== */
+
+shiftSelect.addEventListener(
+
+  "change",
+
+  () => {
+
+
+    localStorage.setItem(
+
+      "selectedShift",
+
+      shiftSelect.value
+
+    );
+
+
+    renderCalendar();
+
+  }
+
+);
+
+
+
+/* =====================================================
+   חודש קודם
+   ===================================================== */
+
+document
+.getElementById(
+  "prev"
+)
+.addEventListener(
+
+  "click",
+
+  async () => {
+
+
+    currentMonth--;
+
+
+    let yearChanged =
+      false;
+
+
+    if (
+      currentMonth < 0
+    ) {
+
+      currentMonth =
+        11;
+
+
+      currentYear--;
+
+
+      yearChanged =
+        true;
+
+    }
+
+
+    if (
+      yearChanged
+    ) {
+
+      await loadHebcalData(
+        currentYear
+      );
+
+    }
+
+
+    renderCalendar();
+
+  }
+
+);
+
+
+
+/* =====================================================
+   חודש הבא
+   ===================================================== */
+
+document
+.getElementById(
+  "next"
+)
+.addEventListener(
+
+  "click",
+
+  async () => {
+
+
+    currentMonth++;
+
+
+    let yearChanged =
+      false;
+
+
+    if (
+      currentMonth > 11
+    ) {
+
+      currentMonth =
+        0;
+
+
+      currentYear++;
+
+
+      yearChanged =
+        true;
+
+    }
+
+
+    if (
+      yearChanged
+    ) {
+
+      await loadHebcalData(
+        currentYear
+      );
+
+    }
+
+
+    renderCalendar();
+
+  }
+
+);
+
+
+
+/* =====================================================
+   בחירת חודש ושנה
+   ===================================================== */
+
+document
+.getElementById(
+  "go"
+)
+.addEventListener(
+
+  "click",
+
+  async () => {
+
+
+    currentMonth =
+
+      Number(
+        monthSelect.value
+      );
+
+
+    currentYear =
+
+      Number(
+        yearSelect.value
+      );
+
+
+    await loadHebcalData(
+      currentYear
+    );
+
+
+    renderCalendar();
+
+  }
+
+);
+
+
+
+/* =====================================================
+   סגירת חלון
+   ===================================================== */
+
+document
+.getElementById(
+  "closeModal"
+)
+.addEventListener(
+
+  "click",
+
+  closeDay
+
+);
+
+
+
+overlay.addEventListener(
+
+  "click",
+
+  event => {
+
+    if (
+      event.target
+      ===
+      overlay
+    ) {
+
+      closeDay();
+
+    }
+
+  }
+
+);
+
+
+
+document.addEventListener(
+
+  "keydown",
+
+  event => {
+
+    if (
+      event.key
+      ===
+      "Escape"
+    ) {
+
+      closeDay();
+
+    }
+
+  }
+
+);
+
+
+
+/* =====================================================
+   הפעלת האתר
+   ===================================================== */
+
+async function init() {
+
+  await loadHebcalData(
+    currentYear
+  );
+
+
+  renderCalendar();
+
+}
+
+
+init();
+
+
+</script>
+
+</body>
+</html>
